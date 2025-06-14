@@ -32,7 +32,7 @@ from service import app
 from service.common import status
 from service.models import db, init_db, Product
 from tests.factories import ProductFactory
-
+from urllib.parse import quote_plus
 # Disable all but critical errors during normal test run
 # uncomment for debugging failing tests
 # logging.disable(logging.CRITICAL)
@@ -200,6 +200,46 @@ class TestProductRoutes(TestCase):
         updated_product = response.get_json()
         self.assertEqual(updated_product["description"],"testdescription")
 
+    def test_delete_product(self):
+        """It should Delete a Product"""
+        products = self._create_products(5)
+        product_count = self.get_product_count()
+        test_product = products[0]
+        response = self.client.delete(f"{BASE_URL}/{test_product.id}")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(response.data), 0)
+        # make sure they are deleted
+        response = self.client.get(f"{BASE_URL}/{test_product.id}")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        new_count = self.get_product_count()
+        self.assertEqual(new_count, product_count - 1)
+
+    def test_list_all_products(self):
+        products = self._create_products(5)
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code,status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data),5)
+
+    def test_query_by_name(self):
+        """It should Query Products by name"""
+        products = self._create_products(5)
+        test_name = products[0].name
+        name_count = len([product for product in products if product.name == test_name])
+        response = self.client.get(
+            BASE_URL, query_string=f"name={quote_plus(test_name)}"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), name_count)
+        # check the data just to be sure
+        for product in data:
+            self.assertEqual(product["name"], test_name)
+
+
+
+
+
 
 
 
@@ -214,3 +254,4 @@ class TestProductRoutes(TestCase):
         data = response.get_json()
         # logging.debug("data = %s", data)
         return len(data)
+
