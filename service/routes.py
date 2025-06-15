@@ -192,7 +192,7 @@ def list_products():
         products = Product.find_by_name(name)
     elif category:
         app.logger.info("Find by category: %s", category)
-         # Handle both uppercase and proper case
+        # Handle both uppercase and proper case
         category_upper = category.upper()
         if hasattr(Category, category_upper):
             products = Product.find_by_category(getattr(Category, category_upper))
