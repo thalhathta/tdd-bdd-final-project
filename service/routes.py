@@ -186,13 +186,16 @@ def list_products():
     name = request.args.get("name")
     category = request.args.get("category")
     available = request.args.get("available")
+
     if name:
         app.logger.info("Find by name: %s", name)
         products = Product.find_by_name(name)
     elif category:
         app.logger.info("Find by category: %s", category)
-        category_value = getattr(Category, category.upper())
-        products = Product.find_by_category(category_value)
+         # Handle both uppercase and proper case
+        category_upper = category.upper()
+        if hasattr(Category, category_upper):
+            products = Product.find_by_category(getattr(Category, category_upper))
     elif available:
         app.logger.info("Find by availability: %s", available)
         available_value = available.lower() in ["true", "1", "yes"]
